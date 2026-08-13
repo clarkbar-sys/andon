@@ -58,6 +58,11 @@ reconstruct from labels, comments, and PR linkage.
 10. **Game vibe is mandatory.** This is a game, not a kanban board with rounded
     corners. Animated belt, issues as boxes, cord-pull moment, lights. Mockup
     first (see the belt-view epic).
+11. **Art direction (locked):** Shop Floor — flat industrial, safety-amber on
+    graphite — with the neon glow treatment reserved for the andon lamps only.
+    Red appears nowhere else in the palette, so a cord-pull is always the
+    loudest thing on screen. See `docs/mockups/belt-view.html`; the pixel
+    "Night Shift '89" skin is parked as a future unlockable theme.
 
 ## Issue scoping convention
 
