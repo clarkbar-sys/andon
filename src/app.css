@@ -1,0 +1,104 @@
+/*
+ * Shop Floor — flat industrial, safety-amber on graphite (docs/SCOPE.md #11).
+ * Red is reserved for a pulled cord and appears nowhere else.
+ */
+:root {
+  --ink: #14171c;
+  --panel: #1e242d;
+  --hud: #1b2129;
+  --card: #2a323d;
+  --card-line: #3a4553;
+  --line: #333c48;
+  --steel: #8d99a6;
+  --paper: #eef2f6;
+  --amber: #ffb520;
+  --amber-dark: #c8880a;
+  --red: #ff4a4a;
+  --green: #3ddc84;
+
+  --display: "Haettenschweiler", "Arial Narrow", Impact, sans-serif;
+  --body: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, monospace;
+  --radius: 4px;
+
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--body);
+  line-height: 1.5;
+  overscroll-behavior-y: none;
+  -webkit-text-size-adjust: 100%;
+}
+
+#app {
+  min-height: 100%;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+a {
+  color: var(--amber);
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--steel);
+}
+
+.btn {
+  display: inline-block;
+  width: 100%;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 11px 10px;
+  border-radius: var(--radius);
+  background: var(--card);
+  border: 1px solid var(--card-line);
+  cursor: pointer;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.btn.primary {
+  background: var(--amber);
+  border-color: var(--amber-dark);
+  color: #201804;
+  font-weight: 700;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

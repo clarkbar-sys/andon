@@ -10,9 +10,25 @@ is pulled. Score = issues closed by merged PRs. See `docs/SCOPE.md` for the
 full v1 scope and design decisions — read it before making architectural
 choices, it is the source of truth for intent.
 
-The repo is currently docs + config only (no application code or build tooling
-yet). The v1 slice is an installable PWA with no backend, talking directly to
-the forge API with a token.
+The v1 slice is an installable PWA with no backend, talking directly to the
+forge API with a token.
+
+## Stack and commands
+
+Vite + TypeScript + Svelte 5 (runes), `vite-plugin-pwa` for the manifest and
+service worker, `smol-toml` for `andon.toml`. Deployed to GitHub Pages from
+`main`, so the build carries a `/andon/` base path (`ANDON_BASE` overrides it).
+
+```sh
+npm run dev      # http://localhost:5173/andon/
+npm run check    # svelte-check — must be clean
+npm test         # vitest
+npm run build
+```
+
+Where things live: `src/lib/forge/` (forge-client interface + adapters),
+`src/lib/line/` (config parse/load/cache), `src/lib/components/` (belt,
+stations, lamps, HUD).
 
 ## Architecture principles (from docs/SCOPE.md)
 
