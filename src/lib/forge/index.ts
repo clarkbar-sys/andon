@@ -3,6 +3,7 @@ import { createGitHubClient } from './github';
 import type { ForgeClient, ForgeConfig } from './types';
 
 export * from './types';
+export { parseClosingRefs } from './linkage';
 export { createGitHubClient } from './github';
 export { createForgejoClient } from './forgejo';
 

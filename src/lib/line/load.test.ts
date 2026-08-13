@@ -6,12 +6,27 @@ import { LineConfigError } from './types';
 
 const TOML = '[belt]\nrepo = "o/r"\n\n[[station]]\nid = "triage"\n';
 
+/** Loading the line only ever reads a file; anything else here is a bug. */
+const unused = () => {
+  throw new Error('loadLine should not touch the rest of the forge');
+};
+
 function client(getFileText: ForgeClient['getFileText']): ForgeClient {
   return {
     kind: 'github',
     getIdentity: async () => ({ login: 'josh' }),
     getFileText,
     webUrl: (repo) => `https://github.com/${repo.owner}/${repo.name}`,
+    listIssues: unused,
+    addLabel: unused,
+    removeLabel: unused,
+    commentOnIssue: unused,
+    commentOnPullRequest: unused,
+    listPullRequests: unused,
+    getPullRequest: unused,
+    listPullRequestsClosing: unused,
+    listClosedIssues: unused,
+    rateLimit: () => null,
   };
 }
 
