@@ -4,7 +4,8 @@ Gamified pull-request workflow. Issues ride a conveyor belt through stations;
 when a station needs a human, the andon cord is pulled. Score = issues closed
 by merged PRs.
 
-See `docs/SCOPE.md` for the v1 scope and `andon.toml` for the line definition.
+See `docs/SCOPE.md` for the v1 scope, `docs/LINE-CONFIG.md` for the `andon.toml`
+schema, and `andon.toml` for the line this repo runs.
 
 ## Running it
 

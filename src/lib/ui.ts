@@ -1,4 +1,4 @@
-import type { CordRule, Station } from './line';
+import type { CordRule, ScoreWindow, Station } from './line';
 
 /** clear = humming, waiting = queue at the station, pulled = cord up (red). */
 export type LampState = 'clear' | 'waiting' | 'pulled';
@@ -17,6 +17,17 @@ const CORD_WORDS: Record<CordRule, string> = {
 
 export function cordWords(rule: CordRule): string {
   return CORD_WORDS[rule];
+}
+
+const WINDOW_WORDS: Record<ScoreWindow, string> = {
+  day: 'today',
+  week: 'week',
+  month: 'month',
+  all: 'all time',
+};
+
+export function scoreWindowWords(window: ScoreWindow): string {
+  return WINDOW_WORDS[window];
 }
 
 /**
