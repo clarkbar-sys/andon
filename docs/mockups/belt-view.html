@@ -1,0 +1,670 @@
+<title>Andon Factory Floor</title>
+<style>
+  :root {
+    --ink: #14171c;
+    --panel: #1e242d;
+    --panel-2: #171c23;
+    --line: #2b333e;
+    --steel: #93a0ae;
+    --steel-dim: #5d6875;
+    --paper: #e8edf2;
+    --amber: #ffb520;
+    --red: #ff4a4a;
+    --green: #3ddc84;
+    --cyan: #3fd9e2;
+    --display: "Haettenschweiler", "Arial Narrow", "Impact", sans-serif;
+    --body: system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ink);
+    color: var(--paper);
+    font-family: var(--body);
+    line-height: 1.55;
+  }
+  a { color: var(--amber); }
+
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 0 24px 96px; }
+
+  header.site {
+    padding: 56px 0 40px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 48px;
+  }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin: 0 0 10px;
+  }
+  h1 {
+    font-family: var(--display);
+    font-weight: 400;
+    font-size: clamp(44px, 7vw, 84px);
+    line-height: 0.95;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    margin: 0 0 14px;
+    text-wrap: balance;
+  }
+  .lede { max-width: 62ch; color: var(--steel); margin: 0; font-size: 17px; }
+  .lede strong { color: var(--paper); font-weight: 600; }
+
+  h2 {
+    font-family: var(--display);
+    font-weight: 400;
+    text-transform: uppercase;
+    font-size: 32px;
+    letter-spacing: 0.02em;
+    margin: 64px 0 6px;
+  }
+  .sub { color: var(--steel); margin: 0 0 28px; max-width: 70ch; }
+
+  /* ---------- candidate row ---------- */
+  .candidates {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 40px 28px;
+    align-items: start;
+  }
+  figure.candidate { margin: 0; }
+  figcaption { margin-top: 18px; }
+  .cand-name {
+    display: flex; align-items: baseline; gap: 10px;
+    font-family: var(--display);
+    font-size: 24px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+  .cand-tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: var(--ink);
+    background: var(--amber);
+    padding: 2px 8px;
+    border-radius: 2px;
+    transform: translateY(-2px);
+  }
+  .cand-notes { color: var(--steel); font-size: 14.5px; margin: 6px 0 0; }
+  .cand-notes b { color: var(--paper); font-weight: 600; }
+
+  /* ---------- phone chrome ---------- */
+  .phone {
+    width: min(340px, 100%);
+    margin: 0 auto;
+    aspect-ratio: 9 / 19;
+    border-radius: 34px;
+    border: 3px solid #303945;
+    background: #0b0d11;
+    padding: 10px;
+    box-shadow: 0 30px 60px -30px rgba(0,0,0,0.8);
+  }
+  .screen {
+    width: 100%; height: 100%;
+    border-radius: 24px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background: var(--scr-bg);
+    color: var(--scr-fg);
+    font-family: var(--scr-font, var(--body));
+    position: relative;
+  }
+
+  /* shared screen structure, skinned via vars */
+  .hud {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 14px 10px;
+    background: var(--scr-hud);
+    border-bottom: var(--scr-rule);
+    flex: 0 0 auto;
+  }
+  .hud .plant {
+    font-family: var(--scr-display);
+    font-size: var(--scr-plant-size, 17px);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .hud .plant small {
+    display: block;
+    font-family: var(--mono);
+    font-size: 8.5px;
+    letter-spacing: 0.14em;
+    color: var(--scr-dim);
+    text-transform: uppercase;
+  }
+  .stats { display: flex; gap: 8px; }
+  .stat {
+    text-align: right;
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+    background: var(--scr-chip);
+    border: var(--scr-chip-border, none);
+    border-radius: var(--scr-radius);
+    padding: 4px 8px;
+  }
+  .stat .n { font-size: 15px; font-weight: 700; color: var(--scr-accent); display: block; line-height: 1.1; }
+  .stat .l { font-size: 7.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--scr-dim); }
+
+  .floor {
+    flex: 1;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 10px 12px;
+    background: var(--scr-floor);
+  }
+  /* the vertical belt */
+  .beltline {
+    position: absolute;
+    top: 0; bottom: 0;
+    left: 50%;
+    width: 34px;
+    transform: translateX(-50%);
+    background:
+      repeating-linear-gradient(
+        180deg,
+        var(--scr-belt-a) 0 12px,
+        var(--scr-belt-b) 12px 24px
+      );
+    border-left: var(--scr-belt-edge);
+    border-right: var(--scr-belt-edge);
+    animation: roll 2.6s linear infinite;
+  }
+  @keyframes roll { to { background-position: 0 48px; } }
+
+  .station {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: 1fr 44px 1fr;
+    align-items: center;
+    gap: 6px;
+  }
+  .st-card {
+    background: var(--scr-card);
+    border: var(--scr-card-border);
+    border-radius: var(--scr-radius);
+    padding: 7px 9px;
+    box-shadow: var(--scr-card-glow, none);
+  }
+  .st-name {
+    font-family: var(--scr-display);
+    text-transform: uppercase;
+    font-size: 13px;
+    letter-spacing: 0.06em;
+    line-height: 1.1;
+  }
+  .st-does {
+    font-family: var(--mono);
+    font-size: 8px;
+    letter-spacing: 0.06em;
+    color: var(--scr-dim);
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+  .st-q {
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 10px;
+    margin-top: 4px;
+    color: var(--scr-accent);
+  }
+  .lamp {
+    justify-self: center;
+    width: 14px; height: 14px;
+    border-radius: var(--scr-lamp-radius, 50%);
+    background: var(--lamp, var(--green));
+    box-shadow: 0 0 10px 2px var(--lamp, var(--green));
+  }
+  .lamp.amber { --lamp: var(--amber); }
+  .lamp.red {
+    --lamp: var(--red);
+    animation: blink 1s steps(2, jump-none) infinite;
+  }
+  @keyframes blink { 50% { box-shadow: 0 0 16px 5px var(--lamp); } }
+
+  /* issue crates riding the belt */
+  .crate {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1;
+    width: 26px; height: 22px;
+    background: var(--scr-crate);
+    border: var(--scr-crate-border);
+    border-radius: var(--scr-radius);
+    display: grid;
+    place-items: center;
+    font-family: var(--mono);
+    font-size: 7.5px;
+    color: var(--scr-crate-fg);
+    animation: ride 8s linear infinite;
+  }
+  .crate.c2 { animation-delay: -3.4s; }
+  .crate.c3 { animation-delay: -6.1s; }
+  @keyframes ride {
+    from { top: -6%; }
+    to   { top: 102%; }
+  }
+
+  .outs {
+    position: relative; z-index: 1;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding: 10px 12px 12px;
+    background: var(--scr-hud);
+    border-top: var(--scr-rule);
+    flex: 0 0 auto;
+  }
+  .out {
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 8px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--scr-dim);
+  }
+  .out .glyph {
+    display: block;
+    font-size: 20px;
+    margin-bottom: 3px;
+    filter: var(--scr-glyph-filter, none);
+  }
+  .out.score { color: var(--scr-accent); }
+
+  /* ---------- skin A: shop floor (flat industrial) ---------- */
+  .skin-flat {
+    --scr-bg: #222831;
+    --scr-floor:
+      linear-gradient(180deg, #262d37, #20262f);
+    --scr-fg: #eef2f6;
+    --scr-dim: #8d99a6;
+    --scr-hud: #1b2129;
+    --scr-rule: 1px solid #333c48;
+    --scr-chip: #242c36;
+    --scr-card: #2a323d;
+    --scr-card-border: 1px solid #3a4553;
+    --scr-accent: var(--amber);
+    --scr-display: var(--display);
+    --scr-radius: 4px;
+    --scr-belt-a: #11151a;
+    --scr-belt-b: #1a2029;
+    --scr-belt-edge: 3px solid #414c5b;
+    --scr-crate: var(--amber);
+    --scr-crate-border: 1px solid #c8880a;
+    --scr-crate-fg: #201804;
+  }
+
+  /* ---------- skin B: night shift '89 (pixel) ---------- */
+  .skin-pixel {
+    --scr-bg: #1a1c2c;
+    --scr-floor: repeating-linear-gradient(0deg, #1a1c2c 0 6px, #181a29 6px 12px);
+    --scr-fg: #f4f4f4;
+    --scr-dim: #8a8fb5;
+    --scr-hud: #24273f;
+    --scr-rule: 3px solid #0d0e18;
+    --scr-chip: #14162a;
+    --scr-chip-border: 2px solid #454a75;
+    --scr-card: #2c2f4e;
+    --scr-card-border: 3px solid #0d0e18;
+    --scr-accent: #ffd23e;
+    --scr-display: var(--mono);
+    --scr-font: var(--mono);
+    --scr-plant-size: 13px;
+    --scr-radius: 0;
+    --scr-lamp-radius: 0;
+    --scr-belt-a: #0d0e18;
+    --scr-belt-b: #33355c;
+    --scr-belt-edge: 4px solid #454a75;
+    --scr-crate: #b86f50;
+    --scr-crate-border: 3px solid #0d0e18;
+    --scr-crate-fg: #ffe7d6;
+  }
+  .skin-pixel .beltline { animation-timing-function: steps(4); }
+  .skin-pixel .crate { animation-timing-function: steps(60); }
+  .skin-pixel .lamp { box-shadow: none; outline: 3px solid #0d0e18; }
+  .skin-pixel .lamp.red { animation: none; }
+
+  /* ---------- skin C: neon foundry ---------- */
+  .skin-neon {
+    --scr-bg: #0a0f1e;
+    --scr-floor: radial-gradient(120% 60% at 50% 0%, #101a33 0%, #0a0f1e 70%);
+    --scr-fg: #e9f6ff;
+    --scr-dim: #5f7695;
+    --scr-hud: rgba(13, 20, 38, 0.9);
+    --scr-rule: 1px solid #1c2a47;
+    --scr-chip: rgba(63, 217, 226, 0.08);
+    --scr-chip-border: 1px solid rgba(63, 217, 226, 0.35);
+    --scr-card: rgba(18, 27, 50, 0.85);
+    --scr-card-border: 1px solid rgba(63, 217, 226, 0.4);
+    --scr-card-glow: 0 0 14px -6px var(--cyan);
+    --scr-accent: var(--cyan);
+    --scr-display: var(--display);
+    --scr-radius: 8px;
+    --scr-belt-a: #060a14;
+    --scr-belt-b: #0e1730;
+    --scr-belt-edge: 2px solid rgba(63, 217, 226, 0.5);
+    --scr-crate: #101c3a;
+    --scr-crate-border: 1px solid var(--cyan);
+    --scr-crate-fg: var(--cyan);
+  }
+
+  /* ---------- cord-pull moment ---------- */
+  .moment-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 40px 28px;
+    align-items: start;
+  }
+  .skin-flat.pulled {
+    --scr-floor: linear-gradient(180deg, #33232a, #241d24);
+  }
+  .pulled .beltline, .pulled .crate { animation-play-state: paused; }
+  .stopbar {
+    position: relative; z-index: 2;
+    margin: 0 12px;
+    background: var(--red);
+    color: #2a0505;
+    border-radius: 4px;
+    padding: 10px 12px;
+    box-shadow: 0 0 24px -4px var(--red);
+    animation: throb 1.6s ease-in-out infinite;
+  }
+  @keyframes throb { 50% { box-shadow: 0 0 34px 0 var(--red); } }
+  .stopbar .st-title {
+    font-family: var(--display);
+    text-transform: uppercase;
+    font-size: 21px;
+    letter-spacing: 0.04em;
+    line-height: 1;
+  }
+  .stopbar p {
+    margin: 4px 0 0;
+    font-family: var(--mono);
+    font-size: 9.5px;
+    letter-spacing: 0.04em;
+  }
+  .cord {
+    position: absolute;
+    right: 22px; top: 0; bottom: 42%;
+    width: 3px;
+    background: repeating-linear-gradient(180deg, #f4d47c 0 8px, #d9a93c 8px 16px);
+    z-index: 2;
+  }
+  .cord::after {
+    content: "";
+    position: absolute;
+    bottom: -16px; left: 50%;
+    transform: translateX(-50%);
+    width: 15px; height: 15px;
+    border-radius: 50%;
+    background: var(--red);
+    border: 3px solid #f4d47c;
+  }
+  .actions {
+    position: relative; z-index: 2;
+    display: flex; gap: 8px;
+    margin: 0 12px;
+  }
+  .btn {
+    flex: 1;
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 9px 4px;
+    border-radius: 4px;
+    background: #2a323d;
+    border: 1px solid #3a4553;
+    color: #eef2f6;
+  }
+  .btn.primary { background: var(--amber); border-color: #c8880a; color: #201804; font-weight: 700; }
+
+  /* ---------- recommendation ---------- */
+  .rec {
+    margin-top: 72px;
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--amber);
+    background: var(--panel-2);
+    border-radius: 6px;
+    padding: 28px 32px;
+  }
+  .rec h2 { margin: 0 0 8px; font-size: 28px; }
+  .rec p { color: var(--steel); max-width: 75ch; margin: 0 0 12px; }
+  .rec p:last-child { margin-bottom: 0; }
+  .rec b { color: var(--paper); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .beltline, .crate, .lamp.red, .stopbar { animation: none; }
+  }
+</style>
+
+<div class="wrap">
+  <header class="site">
+    <p class="eyebrow">clarkbar-sys/andon &middot; issue #13 &middot; belt view mockups</p>
+    <h1>Which factory<br>do you want to run?</h1>
+    <p class="lede">Three art directions for the andon belt, phone-portrait first. The belt runs
+    <strong>vertically</strong> — issues drop from the inbox at the top, ride through the four seed
+    stations, and exit at the bottom as <strong>score</strong> (merged PR) or <strong>compost</strong>
+    (closed, no PR). All three are the same screen re-skinned, which is exactly how the real app will
+    treat themes.</p>
+  </header>
+
+  <h2>The candidates</h2>
+  <p class="sub">Same HUD (score &middot; week &middot; transit), same station cards from <code>andon.toml</code>,
+  same lamps: green humming, amber waiting, red cord pulled.</p>
+
+  <div class="candidates">
+
+    <!-- A: shop floor -->
+    <figure class="candidate">
+      <div class="phone"><div class="screen skin-flat">
+        <div class="hud">
+          <div class="plant">Andon<small>assembly line</small></div>
+          <div class="stats">
+            <div class="stat"><span class="n">12</span><span class="l">score</span></div>
+            <div class="stat"><span class="n">4</span><span class="l">week</span></div>
+            <div class="stat"><span class="n">2.1d</span><span class="l">transit</span></div>
+          </div>
+        </div>
+        <div class="floor">
+          <div class="beltline"></div>
+          <div class="crate">#41</div>
+          <div class="crate c2">#38</div>
+          <div class="crate c3">#44</div>
+          <div class="station">
+            <div class="st-card"><div class="st-name">Triage</div><div class="st-does">classify</div><div class="st-q">2 waiting</div></div>
+            <div class="lamp amber"></div><div></div>
+          </div>
+          <div class="station">
+            <div></div><div class="lamp"></div>
+            <div class="st-card"><div class="st-name">Scope</div><div class="st-does">refine &middot; tag model</div><div class="st-q">clear</div></div>
+          </div>
+          <div class="station">
+            <div class="st-card"><div class="st-name">Build</div><div class="st-does">open the pr</div><div class="st-q">1 working</div></div>
+            <div class="lamp amber"></div><div></div>
+          </div>
+          <div class="station">
+            <div></div><div class="lamp"></div>
+            <div class="st-card"><div class="st-name">Review</div><div class="st-does">merge = score</div><div class="st-q">clear</div></div>
+          </div>
+        </div>
+        <div class="outs">
+          <div class="out"><span class="glyph">🗑</span>compost<br>no points</div>
+          <div class="out score"><span class="glyph">📦</span>shipped<br>+1 score</div>
+        </div>
+      </div></div>
+      <figcaption>
+        <div class="cand-name">A &middot; Shop Floor <span class="cand-tag">recommended base</span></div>
+        <p class="cand-notes"><b>Flat industrial.</b> Safety-amber on graphite, signage type, honest
+        Toyota heritage. Most legible at phone sizes, cheapest to render at 60fps (plain CSS/SVG),
+        and it ages well as stations multiply.</p>
+      </figcaption>
+    </figure>
+
+    <!-- B: pixel -->
+    <figure class="candidate">
+      <div class="phone"><div class="screen skin-pixel">
+        <div class="hud">
+          <div class="plant">Andon<small>night shift '89</small></div>
+          <div class="stats">
+            <div class="stat"><span class="n">12</span><span class="l">scr</span></div>
+            <div class="stat"><span class="n">4</span><span class="l">wk</span></div>
+            <div class="stat"><span class="n">2.1</span><span class="l">day</span></div>
+          </div>
+        </div>
+        <div class="floor">
+          <div class="beltline"></div>
+          <div class="crate">41</div>
+          <div class="crate c2">38</div>
+          <div class="crate c3">44</div>
+          <div class="station">
+            <div class="st-card"><div class="st-name">Triage</div><div class="st-does">classify</div><div class="st-q">2 wait</div></div>
+            <div class="lamp amber"></div><div></div>
+          </div>
+          <div class="station">
+            <div></div><div class="lamp"></div>
+            <div class="st-card"><div class="st-name">Scope</div><div class="st-does">refine</div><div class="st-q">clear</div></div>
+          </div>
+          <div class="station">
+            <div class="st-card"><div class="st-name">Build</div><div class="st-does">make pr</div><div class="st-q">1 work</div></div>
+            <div class="lamp amber"></div><div></div>
+          </div>
+          <div class="station">
+            <div></div><div class="lamp"></div>
+            <div class="st-card"><div class="st-name">Review</div><div class="st-does">merge!</div><div class="st-q">clear</div></div>
+          </div>
+        </div>
+        <div class="outs">
+          <div class="out"><span class="glyph">🗑</span>compost</div>
+          <div class="out score"><span class="glyph">📦</span>+1 pts</div>
+        </div>
+      </div></div>
+      <figcaption>
+        <div class="cand-name">B &middot; Night Shift '89</div>
+        <p class="cand-notes"><b>Pixel factory.</b> Chunky borders, stepped belt motion, arcade HUD.
+        Maximum game feel and the crates are adorable — but small text fights phone legibility, and
+        every new UI element needs pixel art. Highest ongoing art cost.</p>
+      </figcaption>
+    </figure>
+
+    <!-- C: neon -->
+    <figure class="candidate">
+      <div class="phone"><div class="screen skin-neon">
+        <div class="hud">
+          <div class="plant">Andon<small>neon foundry</small></div>
+          <div class="stats">
+            <div class="stat"><span class="n">12</span><span class="l">score</span></div>
+            <div class="stat"><span class="n">4</span><span class="l">week</span></div>
+            <div class="stat"><span class="n">2.1d</span><span class="l">transit</span></div>
+          </div>
+        </div>
+        <div class="floor">
+          <div class="beltline"></div>
+          <div class="crate">#41</div>
+          <div class="crate c2">#38</div>
+          <div class="crate c3">#44</div>
+          <div class="station">
+            <div class="st-card"><div class="st-name">Triage</div><div class="st-does">classify</div><div class="st-q">2 waiting</div></div>
+            <div class="lamp amber"></div><div></div>
+          </div>
+          <div class="station">
+            <div></div><div class="lamp"></div>
+            <div class="st-card"><div class="st-name">Scope</div><div class="st-does">refine &middot; tag model</div><div class="st-q">clear</div></div>
+          </div>
+          <div class="station">
+            <div class="st-card"><div class="st-name">Build</div><div class="st-does">open the pr</div><div class="st-q">1 working</div></div>
+            <div class="lamp amber"></div><div></div>
+          </div>
+          <div class="station">
+            <div></div><div class="lamp"></div>
+            <div class="st-card"><div class="st-name">Review</div><div class="st-does">merge = score</div><div class="st-q">clear</div></div>
+          </div>
+        </div>
+        <div class="outs">
+          <div class="out"><span class="glyph">🗑</span>compost<br>no points</div>
+          <div class="out score"><span class="glyph">📦</span>shipped<br>+1 score</div>
+        </div>
+      </div></div>
+      <figcaption>
+        <div class="cand-name">C &middot; Neon Foundry</div>
+        <p class="cand-notes"><b>Night-shift glow.</b> Dark navy, cyan glass, lamps that really
+        <i>glow</i>. Gorgeous andon lights — but when everything glows, a red cord-pull competes with
+        the ambient neon instead of cutting through it.</p>
+      </figcaption>
+    </figure>
+  </div>
+
+  <h2>The cord-pull moment</h2>
+  <p class="sub">The emotional core of the app, shown in the recommended direction: the belt physically
+  stops, the floor warms toward red, the pulled station takes over the screen, and the two actions you
+  can take are one thumb away.</p>
+
+  <div class="moment-grid">
+    <figure class="candidate">
+      <div class="phone"><div class="screen skin-flat pulled">
+        <div class="hud">
+          <div class="plant">Andon<small>line stopped &middot; 09:41</small></div>
+          <div class="stats">
+            <div class="stat"><span class="n" style="color: var(--red)">⏸</span><span class="l">belt</span></div>
+          </div>
+        </div>
+        <div class="floor">
+          <div class="beltline"></div>
+          <div class="cord"></div>
+          <div class="crate">#41</div>
+          <div class="crate c2">#38</div>
+          <div class="station">
+            <div class="st-card"><div class="st-name">Triage</div><div class="st-does">classify</div><div class="st-q">held</div></div>
+            <div class="lamp amber"></div><div></div>
+          </div>
+          <div class="stopbar">
+            <div class="st-title">Cord pulled &middot; Scope</div>
+            <p>#44 "offline belt cache" needs refining &middot; tag model tier &middot; waiting 3h</p>
+          </div>
+          <div class="actions">
+            <div class="btn primary">Work station</div>
+            <div class="btn">Snooze 1h</div>
+          </div>
+          <div class="station">
+            <div class="st-card"><div class="st-name">Build</div><div class="st-does">open the pr</div><div class="st-q">held</div></div>
+            <div class="lamp red"></div><div></div>
+          </div>
+        </div>
+        <div class="outs">
+          <div class="out"><span class="glyph">🗑</span>compost</div>
+          <div class="out score"><span class="glyph">📦</span>shipped</div>
+        </div>
+      </div></div>
+      <figcaption>
+        <div class="cand-name">Line stopped</div>
+        <p class="cand-notes">Belt animation pauses, red is <b>reserved exclusively for this state</b> —
+        it appears nowhere else in the palette, so it always means "you're needed." This is also the
+        exact layout the hourly check-the-line notification deep-links into.</p>
+      </figcaption>
+    </figure>
+  </div>
+
+  <section class="rec">
+    <h2>Recommendation</h2>
+    <p><b>Ship A (Shop Floor) as the base, and steal C's glow for the lamps only.</b> Flat industrial
+    keeps every station label readable at phone size and renders cheaply, which protects the
+    60fps-belt requirement in the epic. The one bold element is light: andon lamps get the neon
+    treatment (soft bloom, real glow), so green/amber ambience is calm and a red cord-pull is the
+    single loudest thing the screen can do — which is the whole Toyota point.</p>
+    <p>B (Night Shift '89) is the most charming and worth keeping in a drawer — it would make a great
+    unlockable theme once theming is cheap, since all three candidates here are token-swaps over the
+    same markup.</p>
+  </section>
+</div>
