@@ -1,0 +1,32 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# One line at a time: let a running deploy finish rather than cancelling it.
+concurrency:
+  group: gh-pages-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # Project pages live under /<repo>/; the SW scope and manifest follow this.
+      - run: npm run build
+        env:
+          ANDON_BASE: /${{ github.event.repository.name }}/
+      - run: .github/scripts/publish-pages.sh dist
+        env:
+          PAGES_MESSAGE: Deploy ${{ github.sha }}

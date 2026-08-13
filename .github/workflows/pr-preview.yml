@@ -1,0 +1,77 @@
+name: PR preview
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: gh-pages-preview-${{ github.event.number }}
+  cancel-in-progress: false
+
+jobs:
+  preview:
+    # Forks and Dependabot get a read-only token, so there is nothing to push with.
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      PR: ${{ github.event.number }}
+      CLOSED: ${{ github.event.action == 'closed' }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      PREVIEW_PATH: pr-preview/pr-${{ github.event.number }}
+      PREVIEW_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/pr-preview/pr-${{ github.event.number }}/
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        if: github.event.action != 'closed'
+        with:
+          node-version: 22
+          cache: npm
+
+      - if: github.event.action != 'closed'
+        run: npm ci
+
+      - name: Build for the preview path
+        if: github.event.action != 'closed'
+        run: npm run build
+        env:
+          ANDON_BASE: /${{ github.event.repository.name }}/pr-preview/pr-${{ github.event.number }}/
+
+      - name: Publish the preview
+        if: github.event.action != 'closed'
+        run: .github/scripts/publish-pages.sh dist "$PREVIEW_PATH"
+        env:
+          PAGES_MESSAGE: Preview PR #${{ github.event.number }} (${{ github.event.pull_request.head.sha }})
+
+      - name: Take the preview down
+        if: github.event.action == 'closed'
+        run: .github/scripts/publish-pages.sh --remove "$PREVIEW_PATH"
+        env:
+          PAGES_MESSAGE: Remove preview for PR #${{ github.event.number }}
+
+      # One comment per PR, edited in place, so pushes don't pile up noise.
+      - name: Say where it landed
+        run: |
+          marker='<!-- andon-preview -->'
+          if [ "$CLOSED" = true ]; then
+            body=$(printf '%s\n' "$marker" '🏭 Preview taken down — this PR is closed.')
+          else
+            body=$(printf '%s\n' "$marker" \
+              "🏭 **Preview:** $PREVIEW_URL" \
+              '' \
+              "Built from \`$HEAD_SHA\`. Updates on every push, removed when this PR closes." \
+              '' \
+              'It runs its own service worker under the preview path — hard-reload once if it looks stale.')
+          fi
+          existing=$(gh api "repos/$GITHUB_REPOSITORY/issues/$PR/comments" --paginate \
+            --jq "map(select(.body | contains(\"$marker\"))) | .[0].id // empty" | head -1)
+          if [ -n "$existing" ]; then
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$existing" -f body="$body" >/dev/null
+          else
+            gh api -X POST "repos/$GITHUB_REPOSITORY/issues/$PR/comments" -f body="$body" >/dev/null
+          fi

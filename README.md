@@ -6,6 +6,53 @@ by merged PRs.
 
 See `docs/SCOPE.md` for the v1 scope and `andon.toml` for the line definition.
 
+## Running it
+
+Andon is a Vite + Svelte PWA with no backend: it talks to the forge directly
+with a token you paste in, stored on your device.
+
+```sh
+npm install
+npm run dev      # http://localhost:5173/andon/
+npm run check    # svelte-check
+npm test         # vitest
+npm run build    # dist/, ready for a static host
+```
+
+On first load, clock in with:
+
+- **Forge** — GitHub or Forgejo/Gitea
+- **Instance URL** — required for Forgejo, optional for GitHub Enterprise
+- **Repo** — `owner/name`; its root `andon.toml` is the line
+- **Access token** — read access to that repo's contents
+
+The build is served from a sub-path (`/andon/` for GitHub Pages project sites).
+Override it with `ANDON_BASE=/ npm run build` for a root deploy.
+
+### Hosting
+
+Pages serves the `gh-pages` branch: set repo **Settings → Pages → Deploy from a
+branch → `gh-pages` / `(root)`** once, and the workflows keep it stocked.
+
+- `deploy.yml` — every push to `main` rebuilds the site into the branch root,
+  live at `https://<owner>.github.io/andon/`.
+- `pr-preview.yml` — every PR gets its own build under
+  `/andon/pr-preview/pr-<n>/`, linked from a single comment on the PR that is
+  edited in place on each push and removed when the PR closes. Previews are
+  skipped for forks, which get a read-only token.
+
+Both call `.github/scripts/publish-pages.sh`, which retries against the branch
+tip so a deploy and a preview publishing at once cannot clobber each other.
+
+### Layout
+
+```
+src/lib/forge/       forge-client interface + GitHub and Forgejo adapters
+src/lib/line/        andon.toml parsing, loading, offline cache
+src/lib/components/  belt, stations, lamps, HUD
+scripts/             icon generation (npm run icons)
+```
+
 ## License
 
 Copyright (C) 2026 the Andon contributors.
