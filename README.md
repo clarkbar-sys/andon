@@ -25,7 +25,33 @@ On first load, clock in with:
 - **Forge** — GitHub or Forgejo/Gitea
 - **Instance URL** — required for Forgejo, optional for GitHub Enterprise
 - **Repo** — `owner/name`; its root `andon.toml` is the line
-- **Access token** — read access to that repo's contents
+- **Access token** — read access to the repo's contents and issues, plus write
+  access to issues and pull requests once stations start moving work
+
+### Forgejo setup
+
+The PWA calls the API straight from the browser, so a self-hosted Forgejo has
+to allow cross-origin requests from wherever Andon is served. In `app.ini`:
+
+```ini
+[cors]
+ENABLED = true
+ALLOW_DOMAIN = https://<owner>.github.io, http://localhost:5173
+METHODS = GET,POST,DELETE
+HEADERS = Content-Type,Authorization
+```
+
+Without this, every request fails in the browser before it reaches Forgejo —
+the console shows a CORS error while `curl` against the same instance works.
+
+Two behaviours differ from GitHub and are worth knowing before you build a
+line on Forgejo:
+
+- **Labels must already exist.** GitHub creates a label on first use; Forgejo
+  does not, so create every `station:<id>` label on the repo up front or the
+  first move fails with "No label … create it on the instance first."
+- **Tokens are scoped per instance.** Generate one under *Settings →
+  Applications* with `read:repository` plus `write:issue`.
 
 The build is served from a sub-path (`/andon/` for GitHub Pages project sites).
 Override it with `ANDON_BASE=/ npm run build` for a root deploy.
