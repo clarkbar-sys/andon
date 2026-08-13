@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "test": "vitest run",
+    "test:forgejo": "vitest run src/lib/forge/forgejo.live.test.ts --reporter=verbose",
     "icons": "node scripts/generate-icons.mjs"
   },
   "dependencies": {
