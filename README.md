@@ -31,9 +31,18 @@ Override it with `ANDON_BASE=/ npm run build` for a root deploy.
 
 ### Hosting
 
-`.github/workflows/deploy.yml` publishes `dist/` to GitHub Pages on every push
-to `main`. Enable Pages for the repo with source **GitHub Actions** and the app
-lands at `https://<owner>.github.io/andon/`.
+Pages serves the `gh-pages` branch: set repo **Settings → Pages → Deploy from a
+branch → `gh-pages` / `(root)`** once, and the workflows keep it stocked.
+
+- `deploy.yml` — every push to `main` rebuilds the site into the branch root,
+  live at `https://<owner>.github.io/andon/`.
+- `pr-preview.yml` — every PR gets its own build under
+  `/andon/pr-preview/pr-<n>/`, linked from a single comment on the PR that is
+  edited in place on each push and removed when the PR closes. Previews are
+  skipped for forks, which get a read-only token.
+
+Both call `.github/scripts/publish-pages.sh`, which retries against the branch
+tip so a deploy and a preview publishing at once cannot clobber each other.
 
 ### Layout
 

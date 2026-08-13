@@ -31,8 +31,9 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,webmanifest}'],
         navigateFallback: `${base}index.html`,
-        // Forge responses are token-scoped; the line is cached in localStorage instead.
-        navigateFallbackDenylist: [/^\/api\//],
+        // PR previews sit under the live site's scope on the same origin; the
+        // live SW must not answer their navigations with the live shell.
+        navigateFallbackDenylist: [/\/pr-preview\//],
       },
       devOptions: { enabled: false },
     }),

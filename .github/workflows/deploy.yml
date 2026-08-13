@@ -6,17 +6,15 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 # One line at a time: let a running deploy finish rather than cancelling it.
 concurrency:
-  group: pages
+  group: gh-pages-deploy
   cancel-in-progress: false
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,23 +22,11 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - uses: actions/configure-pages@v5
-        id: pages
       - run: npm ci
       # Project pages live under /<repo>/; the SW scope and manifest follow this.
       - run: npm run build
         env:
-          ANDON_BASE: ${{ steps.pages.outputs.base_path }}/
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - uses: actions/deploy-pages@v4
-        id: deployment
+          ANDON_BASE: /${{ github.event.repository.name }}/
+      - run: .github/scripts/publish-pages.sh dist
+        env:
+          PAGES_MESSAGE: Deploy ${{ github.sha }}
