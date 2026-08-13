@@ -1,0 +1,47 @@
+# The line. Issues ride the belt left to right through these stations.
+# Andon renders this file — the forge (labels/comments/PRs) holds the live state.
+
+[belt]
+name = "Andon assembly line"
+repo = "clarkbar-sys/andon"
+forge = "github" # or "forgejo"
+
+# Issues with no station label sit in the inbox at the head of the belt.
+# Closing an issue without a merged PR drops it in the compost bin. No points.
+
+[[station]]
+id = "triage"
+name = "Triage"
+worker = "human" # later: "agent"
+label = "station:triage"
+does = "Classify the issue: real work, duplicate, or compost."
+cord = "on-arrival" # v1: every arrival at a human station pulls the cord
+
+[[station]]
+id = "scope"
+name = "Scope"
+worker = "human"
+label = "station:scope"
+does = "Refine into something buildable; tag model tier (model:sonnet/opus/fable)."
+cord = "on-arrival"
+
+[[station]]
+id = "build"
+name = "Build"
+worker = "human"
+label = "station:build"
+does = "Do the work. Open a PR that closes the issue."
+cord = "on-arrival"
+
+[[station]]
+id = "review"
+name = "Review"
+worker = "human"
+label = "station:review"
+does = "Review and merge the PR. Merged PR closing the issue = score."
+cord = "on-arrival"
+
+[score]
+# An issue only scores when closed by a merged PR.
+window = "week"
+show = ["total", "window", "transit-time"]
