@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ForgeError, type ForgeClient } from '../forge';
 import { memoryStore } from '../storage';
 import { loadLine } from './load';
+import { LineConfigError } from './types';
 
 const TOML = '[belt]\nrepo = "o/r"\n\n[[station]]\nid = "triage"\n';
 
@@ -46,6 +47,31 @@ describe('loadLine', () => {
       throw new ForgeError('offline', 'no network');
     });
     await expect(loadLine(offline, 'other/repo', store)).rejects.toMatchObject({ kind: 'offline' });
+  });
+
+  it('reports the outage rather than a cached line it can no longer run', async () => {
+    const store = memoryStore();
+    store.write(
+      'andon.line-cache',
+      JSON.stringify({ repo: 'o/r', toml: '[belt]\nrepo = "o/r"\n\n[[station]]\nid = "a"\nworker = "agent"\n', fetchedAt: 1 }),
+    );
+
+    const offline = client(async () => {
+      throw new ForgeError('offline', 'no network');
+    });
+    await expect(loadLine(offline, 'o/r', store)).rejects.toMatchObject({ kind: 'offline' });
+  });
+
+  it('surfaces a broken line as a config error, not a blank belt', async () => {
+    const broken = client(async () => '[belt]\nrepo = "o/r"\n');
+    await expect(loadLine(broken, 'o/r', memoryStore())).rejects.toBeInstanceOf(LineConfigError);
+  });
+
+  it('does not cache a config it refused to parse', async () => {
+    const store = memoryStore();
+    await loadLine(client(async () => TOML), 'o/r', store);
+    await expect(loadLine(client(async () => '[belt]\n'), 'o/r', store)).rejects.toBeInstanceOf(LineConfigError);
+    expect(store.read('andon.line-cache')).toContain('triage');
   });
 
   it('says so when the repo has no andon.toml', async () => {

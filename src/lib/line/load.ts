@@ -41,14 +41,27 @@ export async function loadLine(client: ForgeClient, repoSlug: string, store: Sto
     return { line, source: 'forge', fetchedAt };
   } catch (error) {
     if (fallback && error instanceof ForgeError && error.kind === 'offline') {
-      return {
-        line: parseLine(fallback.toml),
-        source: 'cache',
-        fetchedAt: fallback.fetchedAt,
-        staleReason: 'Forge unreachable — showing the last line Andon saw.',
-      };
+      // A cache written by an older, looser parser may no longer be a line we
+      // will run; the network error is the more useful thing to report then.
+      const line = tryParse(fallback.toml);
+      if (line) {
+        return {
+          line,
+          source: 'cache',
+          fetchedAt: fallback.fetchedAt,
+          staleReason: 'Forge unreachable — showing the last line Andon saw.',
+        };
+      }
     }
     throw error;
+  }
+}
+
+function tryParse(toml: string): Line | null {
+  try {
+    return parseLine(toml);
+  } catch {
+    return null;
   }
 }
 

@@ -1,17 +1,22 @@
 <script lang="ts">
-  import type { Line } from '../line';
+  import type { Line, ScoreStat } from '../line';
+  import { scoreWindowWords } from '../ui';
 
   let { line, subtitle }: { line: Line; subtitle: string } = $props();
 
-  const STAT_LABELS: Record<string, string> = {
+  const STAT_LABELS: Record<ScoreStat, string> = {
     total: 'score',
-    window: 'week',
+    window: 'window',
     'transit-time': 'transit',
   };
 
   // Real numbers arrive with the issue feed; the HUD shows the shape now.
   const stats = $derived(
-    line.score.show.map((key) => ({ key, label: STAT_LABELS[key] ?? key, value: '—' })),
+    line.score.show.map((key) => ({
+      key,
+      label: key === 'window' ? scoreWindowWords(line.score.window) : STAT_LABELS[key],
+      value: '—',
+    })),
   );
 </script>
 

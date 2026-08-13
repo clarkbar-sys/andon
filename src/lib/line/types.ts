@@ -5,6 +5,10 @@ export type WorkerType = 'human' | 'agent';
 /** When the cord goes up. v1 stations are all human, so arrival is a stop. */
 export type CordRule = 'on-arrival' | 'on-stuck' | 'never';
 
+export type ScoreWindow = 'day' | 'week' | 'month' | 'all';
+
+export type ScoreStat = 'total' | 'window' | 'transit-time';
+
 export interface Station {
   id: string;
   name: string;
@@ -16,8 +20,8 @@ export interface Station {
 }
 
 export interface ScoreConfig {
-  window: string;
-  show: string[];
+  window: ScoreWindow;
+  show: ScoreStat[];
 }
 
 export interface Line {
@@ -29,9 +33,17 @@ export interface Line {
   score: ScoreConfig;
 }
 
+/**
+ * A line Andon refuses to run. `problems` holds every fault found in one pass,
+ * so a broken config is fixed in one edit rather than one error at a time.
+ */
 export class LineConfigError extends Error {
-  constructor(message: string) {
-    super(message);
+  readonly problems: string[];
+
+  constructor(problems: string[] | string) {
+    const list = typeof problems === 'string' ? [problems] : problems;
+    super(list.join(' '));
     this.name = 'LineConfigError';
+    this.problems = list;
   }
 }

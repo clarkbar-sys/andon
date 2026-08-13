@@ -1,12 +1,14 @@
 <script lang="ts">
   import { ForgeError, parseRepoRef } from '../forge';
-  import { LINE_CONFIG_PATH, loadLine, type LineLoad } from '../line';
+  import { LINE_CONFIG_PATH, LineConfigError, loadLine, type LineLoad } from '../line';
   import { clientFor, session, signOut } from '../settings.svelte';
   import Belt from './Belt.svelte';
   import Hud from './Hud.svelte';
+  import LineDown from './LineDown.svelte';
 
   let load = $state<LineLoad | null>(null);
   let error = $state<string | null>(null);
+  let problems = $state<string[]>([]);
   let busy = $state(false);
 
   const repo = $derived(session.settings.repo);
@@ -18,11 +20,16 @@
     try {
       load = await loadLine(clientFor(session.settings, token), session.settings.repo);
       error = null;
+      problems = [];
     } catch (cause) {
       if (cause instanceof ForgeError && cause.kind === 'unauthorized') {
         signOut();
         return;
       }
+      // A line we cannot read is a line we cannot run: drop the stale belt so
+      // the floor never shows stations the config no longer defines.
+      if (cause instanceof LineConfigError) load = null;
+      problems = cause instanceof LineConfigError ? cause.problems : [];
       error = cause instanceof Error ? cause.message : 'Could not read the line.';
     } finally {
       busy = false;
@@ -46,6 +53,12 @@
   });
 
   const subtitle = $derived(load?.source === 'cache' ? `${repo} · cached` : repo);
+
+  const reason = $derived(
+    problems.length > 1
+      ? `${LINE_CONFIG_PATH} in ${repo} does not describe a line Andon can run:`
+      : (error ?? 'Could not read the line.'),
+  );
 </script>
 
 <div class="view">
@@ -58,7 +71,9 @@
       <p class="notice" role="status">{error}</p>
     {/if}
 
-    <Belt stations={load.line.stations} />
+    <!-- Cached or errored means Andon is not seeing the line right now; a belt
+         that keeps rolling would be claiming otherwise. -->
+    <Belt stations={load.line.stations} running={!load.staleReason && !error} />
 
     <footer>
       <div class="who">
@@ -71,20 +86,16 @@
       </div>
     </footer>
   {:else if error}
-    <div class="pad">
-      <h1>Line down</h1>
-      <p class="lede">{error}</p>
-      {#if configUrl}
-        <p class="lede">
-          The line is defined by <code>{LINE_CONFIG_PATH}</code> at the root of
-          <a href={configUrl} target="_blank" rel="noreferrer noopener">{repo}</a>.
-        </p>
-      {/if}
-      <div class="acts">
-        <button class="btn primary" onclick={refresh} disabled={busy}>Try again</button>
-        <button class="btn" onclick={signOut}>Clock out</button>
-      </div>
-    </div>
+    <LineDown {reason} {problems} {busy} onRetry={refresh} onSignOut={signOut}>
+      {#snippet detail()}
+        {#if configUrl}
+          <p class="lede">
+            The line is defined by <code>{LINE_CONFIG_PATH}</code> at the root of
+            <a href={configUrl} target="_blank" rel="noreferrer noopener">{repo}</a>.
+          </p>
+        {/if}
+      {/snippet}
+    </LineDown>
   {:else}
     <div class="pad">
       <p class="eyebrow">Reading the line…</p>
@@ -106,16 +117,6 @@
     max-width: 460px;
     width: 100%;
     margin: 0 auto;
-  }
-
-  h1 {
-    font-family: var(--display);
-    font-weight: 400;
-    text-transform: uppercase;
-    font-size: 40px;
-    letter-spacing: 0.02em;
-    line-height: 1;
-    margin: 0 0 10px;
   }
 
   .lede {
