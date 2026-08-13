@@ -53,6 +53,31 @@ line on Forgejo:
 - **Tokens are scoped per instance.** Generate one under *Settings →
   Applications* with `read:repository` plus `write:issue`.
 
+#### Verifying an instance
+
+The unit tests mock the network, so they prove the adapter's shape and not
+that a real Forgejo agrees with it. `npm run test:forgejo` runs the same
+operations against a live instance instead, and prints what it found — issue
+counts, the labels in play, which closed issues scored:
+
+```sh
+ANDON_FORGEJO_URL=https://forge.example \
+ANDON_FORGEJO_TOKEN=... \
+ANDON_FORGEJO_REPO=owner/name \
+ANDON_FORGEJO_ISSUE=1 \
+npm run test:forgejo
+```
+
+`ANDON_FORGEJO_URL`, `_TOKEN` and `_REPO` run the read-only checks.
+`ANDON_FORGEJO_ISSUE` adds the mutation checks, which apply and remove
+`station:triage` (override with `ANDON_FORGEJO_LABEL`) and post one comment
+on that issue — point it at a scratch issue. Set none of them and the whole
+file skips, which is why `npm test` stays hermetic.
+
+**The `[cors]` block is the one thing this cannot check**, since Node has no
+same-origin policy to fall foul of. Verify it in the browser: `npm run dev`,
+clock in against the instance, and watch for a CORS error in the console.
+
 The build is served from a sub-path (`/andon/` for GitHub Pages project sites).
 Override it with `ANDON_BASE=/ npm run build` for a root deploy.
 
